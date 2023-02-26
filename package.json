@@ -4,7 +4,8 @@
   "description": "version 2 for portal komanczagssch.pl",
   "main": "app.js",
   "scripts": {
-    "dev": "npx ts-node-dev ./bin/www"
+    "dev": "npx ts-node-dev ./bin/www",
+    "migrate": "npx sequelize-cli db:migrate"
   },
   "author": "D Pilecki",
   "license": "ISC",

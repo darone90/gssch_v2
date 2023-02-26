@@ -1,8 +1,9 @@
 import Seq, { ModelDefined, Sequelize } from 'sequelize'
+import { UserAttributes } from '../ts/models';
  
 export default (sequelize: Sequelize, DataTypes:typeof Seq.DataTypes) => {
 
-  const Users:ModelDefined<any,any> = sequelize.define('Users', {
+  const Users:ModelDefined<UserAttributes, UserAttributes> = sequelize.define('Users', {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -14,6 +15,10 @@ export default (sequelize: Sequelize, DataTypes:typeof Seq.DataTypes) => {
       allowNull: false
     },
     hash: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    login: {
       type: DataTypes.STRING,
       allowNull: false
     },

@@ -22,7 +22,11 @@ module.exports = {
       role: {
         type: Sequelize.STRING,
         allowNull: false
-      }
+      },
+      login: {
+        type: Sequelize.STRING,
+        allowNull: false
+      },
     })
   },
   down: async (queryInterface) => {
