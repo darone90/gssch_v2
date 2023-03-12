@@ -1,0 +1,6 @@
+{
+  source: 'APP',
+  level: 'error',
+  message: 'database connection error Error: connect ECONNREFUSED 127.0.0.1:3306',
+  timestamp: '2023-03-11T18:11:15.732Z'
+}

@@ -3,14 +3,17 @@
       "noImplicitAny": true,
       "preserveConstEnums": true, 
       "sourceMap": false, 
-      "target": "ES5", 
+      "target": "ES6", 
       "downlevelIteration": true,
       "lib": ["dom", "es6", "dom.iterable"], 
       "moduleResolution": "Node",
       "esModuleInterop": true,
-      "outDir": "build"
+      "outDir": "build",
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "allowJs": true
     },
     "include": [
       "./*"
-    ]
+, "database/connection.ts"    ]
   }
