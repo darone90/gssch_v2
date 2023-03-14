@@ -11,6 +11,11 @@ export class User extends BaseEntity{
 
     @Column()
     login: string
+
+    @Column({
+        nullable: true
+    })
+    token: string | null
     
     @CreateDateColumn()
     created_at: Date;
