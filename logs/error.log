@@ -22,3 +22,45 @@
   message: 'Unexpected error: Unexpected token } in JSON at position 23',
   timestamp: '2023-03-14T14:57:01.791Z'
 }
+{
+  source: 'ERROR MIDDLEWARE',
+  level: 'error',
+  message: 'Unexpected error: password must have at least 6 characters',
+  timestamp: '2023-03-19T21:29:42.111Z'
+}
+{
+  source: 'USER VALIDATOR',
+  level: 'error',
+  message: 'Error during user data validation: login must have at least 4 characters',
+  timestamp: '2023-03-19T21:42:13.725Z'
+}
+{
+  source: 'USER VALIDATOR',
+  level: 'error',
+  message: 'Error during user data validation: password must have at least 6 characters',
+  timestamp: '2023-03-19T21:47:36.766Z'
+}
+{
+  source: 'USER VALIDATOR',
+  level: 'error',
+  message: 'Error during user data validation: new password must have at least 6 characters',
+  timestamp: '2023-03-19T21:55:57.257Z'
+}
+{
+  source: 'USER VALIDATOR',
+  level: 'error',
+  message: 'Error during user data validation: new password must have at least 6 characters',
+  timestamp: '2023-03-19T21:56:35.130Z'
+}
+{
+  source: 'USER VALIDATOR',
+  level: 'error',
+  message: 'Error during user data validation: new login must have at least 4 characters',
+  timestamp: '2023-03-19T21:57:02.070Z'
+}
+{
+  source: 'USER VALIDATOR',
+  level: 'error',
+  message: 'Error during user data validation: new login must have at least 4 characters',
+  timestamp: '2023-03-19T22:24:05.716Z'
+}

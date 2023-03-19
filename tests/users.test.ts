@@ -96,6 +96,44 @@ describe("login and logout", () => {
   })
 })
 
+describe("validator middleware test", () => {
+  it("wrong user login during user add", async () => {
+    const response = await request
+      .post("/users/user")
+      .send({login: "", password: newDummyPassword})
+      .expect(400)
+      const responseData = JSON.parse(response.text);
+      expect(responseData).toHaveProperty('info', expect.stringContaining("validation error"))
+  })
+
+  it("wrong user password during user add", async () => {
+    const response = await request
+      .post("/users/user")
+      .send({login: newDummyLogin, password: ""})
+      .expect(400)
+      const responseData = JSON.parse(response.text);
+      expect(responseData).toHaveProperty('info', expect.stringContaining("validation error"))
+  })
+
+  it("change login with wrong data", async () => {
+    const response = await request
+      .patch("/users/login")
+      .send({...dummyUser, newValue: ""})
+      .expect(400)
+      const responseData = JSON.parse(response.text);
+      expect(responseData).toHaveProperty('info', expect.stringContaining("validation error"))
+  })
+
+  it("change password with wrong data", async () => {
+    const response = await request
+      .patch("/users/password")
+      .send({...dummyUser, newValue: ""})
+      .expect(400)
+      const responseData = JSON.parse(response.text);
+      expect(responseData).toHaveProperty('info', expect.stringContaining("validation error"))
+  })
+})
+
 describe('get user list and user delete', () => {
   it("get list of user", async () => {
     const response = await request
