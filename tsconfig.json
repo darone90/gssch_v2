@@ -1,5 +1,9 @@
 {
     "compilerOptions": {
+      "types": [
+        "jest", "reflect-metadata"
+      ],
+      "typeRoots": ["./ts", "./node_modules/@types"],
       "noImplicitAny": true,
       "preserveConstEnums": true, 
       "sourceMap": false, 
@@ -13,7 +17,10 @@
       "emitDecoratorMetadata": true,
       "allowJs": true
     },
+    "exclude": ["node_modules"],
     "include": [
-      "./*"
-, "database/connection.ts"    ]
+      "./*",
+      "database/connection.ts",
+      "tests/**/*"    
+    ]
   }

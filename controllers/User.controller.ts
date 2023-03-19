@@ -7,9 +7,10 @@ import { en } from '../locale/controllers/User.disctionary'
 
 import { Token, UserDTO } from '../ts';
 import HTTPError from '../errors/httpError';
+import { userListDecorate } from '../decorators/User.decorator';
 
 class UserController {
-  async addUser(req: Request, res: Response): Promise<void> {
+  addUser = async (req: Request, res: Response): Promise<void> => {
     const { login, password } = req.body as UserDTO;
     try {
       const checkUser = await User.findOne({
@@ -33,13 +34,13 @@ class UserController {
       newUser.hash = hash;
       newUser.role = role as Role;
       await newUser.save();
-      res.status(201).json({ info: en.userAdded, id: newUser.id }); // json z wszystkimi informacjami
+      res.status(201).json({ info: en.userAdded, id: newUser.id });
     } catch (error) {
       throw new HTTPError(500, error.message, en.CONTROLLER, 'add user');
     }
   }
 
-  async login(req: Request, res: Response): Promise<void> {
+  login = async (req: Request, res: Response):Promise<void> => {
     const { login, password } = req.body as UserDTO;
     try {
       const user = await this.checkLoginAndPassword(res, password, login);
@@ -52,20 +53,20 @@ class UserController {
         domain: process.env.DOMAIN, 
         httpOnly: true,
       });
-      res.json({ info: en.loginOK, id: user.id });
+      res.json({ info: en.loginOK, login: user.login });
     } catch (error) {
       throw new HTTPError(500, error.message, en.CONTROLLER, 'login');
     }
   }
 
-  async logout(req: Request, res: Response): Promise<void> {
+  logout = async (req: Request, res: Response): Promise<void> => {
     try {
       const jwt = req.cookies.jwt;
       if (!jwt) {
         res.json({ info: en.loginNoUser });
         return;
       }
-      const token = verify(jwt, process.env.TOKEN as string) as Token;
+      const token = verify(jwt.access, process.env.TOKEN as string) as Token;
       const user = await User.findOne({
         where: {
           token: token.token,
@@ -84,7 +85,7 @@ class UserController {
     }
   }
 
-  async deleteUser(req: Request, res: Response): Promise<void> {
+  deleteUser = async (req: Request, res: Response): Promise<void> => {
     const { login } = req.body as UserDTO;
     try {
       const user = await User.findOne({
@@ -103,7 +104,7 @@ class UserController {
     }
   }
 
-  async passwordChange(req: Request, res: Response): Promise<void> {
+  passwordChange = async (req: Request, res: Response): Promise<void> => {
     const { password, login, newValue } = req.body as UserDTO;
     try {
       const user = await this.checkLoginAndPassword(res, password, login);
@@ -117,7 +118,7 @@ class UserController {
     }
   }
 
-  async logginChange(req: Request, res: Response): Promise<void> {
+  logginChange = async (req: Request, res: Response): Promise<void> => {
     const { newValue, password, login } = req.body as UserDTO;
     try {
       const user = await this.checkLoginAndPassword(res, password, login);
@@ -130,14 +131,15 @@ class UserController {
     }
   }
 
-  async isLoggedIn(req: Request, res: Response): Promise<void> {
+  isLoggedIn = async (req: Request, res: Response): Promise<void> => {
     const jwt = req.cookies.jwt;
+    
     try {
       if (!jwt) {
         res.status(401).json({ info: en.loginFalse });
         return;
       }
-      const token = verify(jwt, process.env.TOKEN as string) as Token; 
+      const token = verify(jwt.access, process.env.TOKEN as string) as Token; 
       const user = await User.findOne({
         where: {
           token: token.token,
@@ -153,7 +155,23 @@ class UserController {
     }
   }
 
-  async addAdminUser(name: string, password: string): Promise<string> {
+  usersList = async (req: Request, res: Response):Promise<void> => {
+    try {
+      const userList = await User.find({
+        relations: ['role'],
+        where: {
+          role: {
+            role: "USER"
+          }
+        }
+      });
+      res.json(userListDecorate(userList))
+    }catch(error) {
+      throw new HTTPError(500, error.message, en.CONTROLLER, 'user list');
+    }
+  }
+
+  addAdminUser = async(name: string, password: string): Promise<string> => {
     const hash = await hashPassword(password);
     const role = await Role.findOne({
       where: {
@@ -170,7 +188,7 @@ class UserController {
     return admin.id;
   }
 
-  async checkLoginAndPassword(res: Response, password: string, login: string): Promise<User | null> {
+  checkLoginAndPassword = async (res: Response, password: string, login: string): Promise<User | null> => {
     const checkUser = await User.findOne({
       where: {
         login,
@@ -180,8 +198,9 @@ class UserController {
       res.json({ info: en.loginNoExist });
       return null;
     }
+    
     const checkPassword = await comparePassword(password, checkUser.hash);
-    if (checkPassword) {
+    if (!checkPassword) {
       res.json({ info: en.passwordNotCorrect });
       return null;
     }

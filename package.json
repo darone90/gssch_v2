@@ -4,6 +4,7 @@
   "description": "version 2 for portal komanczagssch.pl",
   "main": "app.js",
   "scripts": {
+    "test": "jest",
     "dev": "npx ts-node-dev ./bin/www dev",
     "command:dev": "npx ts-node ./commands/index.ts",
     "database:migrate": "npx ts-node ./database/migrate.ts",

@@ -4,3 +4,21 @@
   message: 'database connection error Error: connect ECONNREFUSED 127.0.0.1:3306',
   timestamp: '2023-03-11T18:11:15.732Z'
 }
+{
+  source: 'ERROR MIDDLEWARE',
+  level: 'error',
+  message: 'Unexpected error',
+  timestamp: '2023-03-14T14:51:33.887Z'
+}
+{
+  source: 'ERROR MIDDLEWARE',
+  level: 'error',
+  message: 'Unexpected error: Unexpected token } in JSON at position 45',
+  timestamp: '2023-03-14T14:52:48.719Z'
+}
+{
+  source: 'ERROR MIDDLEWARE',
+  level: 'error',
+  message: 'Unexpected error: Unexpected token } in JSON at position 23',
+  timestamp: '2023-03-14T14:57:01.791Z'
+}

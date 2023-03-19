@@ -10,7 +10,7 @@ const errorHandleMiddleware = (err:any, req: Request, res: Response, next: NextF
       .status(err.code)
       .json({info: 'internal server error'})
   } else {
-    logger.error(`Unexpected error`, {source: "ERROR MIDDLEWARE"})
+    logger.error(`Unexpected error: ${err.message}`, {source: "ERROR MIDDLEWARE"})
     res
       .status(500)
       .json({info: 'internal server error'})
