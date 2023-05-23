@@ -12,5 +12,6 @@ export const en = {
   passwordNotCorrect: "password not correct",
   passwordChange: "password changed",
   loginChanged: "login changed",
+  incorrectData: "login or password is to short",
   CONTROLLER: "USER CONTROLLER",
 }

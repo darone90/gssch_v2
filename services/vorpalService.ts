@@ -25,7 +25,7 @@ class VorpalService {
       case 'success':
         style = chalk.white.bgGreen;
         break;
-      case 'c':
+      case 'error':
         style = chalk.white.bgRed;
         break;
       case 'warning':

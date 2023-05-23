@@ -1,42 +1,35 @@
 import { User } from '../Entities/User.entity';
 import { Request, Response } from 'express';
-import { Role } from '../Entities/Role.entity';
 import { hashPassword, comparePassword, createJWT } from '../services/cryptoService';
 import { verify } from 'jsonwebtoken';
 import { en } from '../locale/controllers/User.disctionary'
-
 import { Token, UserDTO } from '../ts';
 import HTTPError from '../errors/httpError';
-import { userListDecorate } from '../decorators/User.decorator';
+import vorpalService from '../services/vorpalService';
+import UserValidator from '../validators/User.validator';
 
 class UserController {
-  addUser = async (req: Request, res: Response): Promise<void> => {
-    const { login, password } = req.body as UserDTO;
+  addUser = async (user: UserDTO):Promise<User> => {
+    const { login, password } = user;
+    const dataCheck = UserValidator(login, password);
+    if(!dataCheck) throw new Error(en.incorrectData);
     try {
       const checkUser = await User.findOne({
         where: {
           login,
         },
       });
-
       if (checkUser) {
-        res.status(409).json({ info: en.userExist });
-        return;
+        throw new Error(en.userExist)
       }
       const hash = await hashPassword(password);
-      const role = await Role.findOne({
-        where: {
-          role: 'USER',
-        },
-      });
       const newUser = new User();
       newUser.login = login;
       newUser.hash = hash;
-      newUser.role = role as Role;
       await newUser.save();
-      res.status(201).json({ info: en.userAdded, id: newUser.id });
+      return newUser;
     } catch (error) {
-      throw new HTTPError(500, error.message, en.CONTROLLER, 'add user');
+      vorpalService.log(error, 'error');
     }
   }
 
@@ -85,8 +78,7 @@ class UserController {
     }
   }
 
-  deleteUser = async (req: Request, res: Response): Promise<void> => {
-    const { login } = req.body as UserDTO;
+  deleteUser = async (login:string): Promise<string> => {
     try {
       const user = await User.findOne({
         where: {
@@ -94,13 +86,13 @@ class UserController {
         },
       });
       if (!user) {
-        res.status(404).json({ info: en.loginNotFound });
-        return;
+        throw new Error(en.loginNotFound)
       }
+      const id = user.id
       await user.remove();
-      res.json({ info: en.userDeleted });
+      return id
     } catch (error) {
-      throw new HTTPError(500, error.message, en.CONTROLLER, 'delete user');
+      vorpalService.log(error, 'error');
     }
   }
 
@@ -155,37 +147,13 @@ class UserController {
     }
   }
 
-  usersList = async (req: Request, res: Response):Promise<void> => {
+  usersList = async ():Promise<User[]> => {
     try {
-      const userList = await User.find({
-        relations: ['role'],
-        where: {
-          role: {
-            role: "USER"
-          }
-        }
-      });
-      res.json(userListDecorate(userList))
+      const userList = await User.find();
+      return userList
     }catch(error) {
-      throw new HTTPError(500, error.message, en.CONTROLLER, 'user list');
+      vorpalService.log(error, 'error');
     }
-  }
-
-  addAdminUser = async(name: string, password: string): Promise<string> => {
-    const hash = await hashPassword(password);
-    const role = await Role.findOne({
-      where: {
-        role: 'ADMIN',
-      },
-    });
-    const admin = new User();
-    admin.login = name;
-    admin.hash = hash;
-    admin.role = role as Role;
-
-    await admin.save();
-
-    return admin.id;
   }
 
   checkLoginAndPassword = async (res: Response, password: string, login: string): Promise<User | null> => {
@@ -195,13 +163,17 @@ class UserController {
       },
     });
     if (!checkUser) {
-      res.json({ info: en.loginNoExist });
+      res
+        .status(401)
+        .json({ info: en.loginNoExist });
       return null;
     }
     
     const checkPassword = await comparePassword(password, checkUser.hash);
     if (!checkPassword) {
-      res.json({ info: en.passwordNotCorrect });
+      res
+        .status(401)
+        .json({ info: en.passwordNotCorrect });
       return null;
     }
     return checkUser;

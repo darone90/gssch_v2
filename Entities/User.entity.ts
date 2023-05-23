@@ -1,5 +1,4 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, BaseEntity } from "typeorm"
-import { Role } from "./Role.entity"
 
 @Entity({name: "user"})
 export class User extends BaseEntity{
@@ -19,7 +18,4 @@ export class User extends BaseEntity{
     
     @CreateDateColumn()
     created_at: Date;
-
-    @ManyToOne(() => Role, (role) => role.users)
-    role: Role
 }

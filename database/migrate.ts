@@ -2,10 +2,9 @@ import { logger } from '../services/loggerService';
 import { dotenvService } from '../services/dotEnvService';
 import { DataSource } from "typeorm";
 import { User } from '../Entities/User.entity';
-import { Role } from "../Entities/Role.entity";
 dotenvService;
 
-const entities = [User, Role]
+const entities = [User]
 
 const migrationsDataSource = new DataSource({
   type: "mysql",

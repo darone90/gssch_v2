@@ -1,10 +1,10 @@
 import app from '../app';
-import RoleSeed from '../database/seeders/Role.seed'
 import supertest from 'supertest';
 import { dotenvService } from '../services/dotEnvService';
-import gsschDataSource from '../database/connection';
 import testDatabase from '../database/fortest';
 import makeString from './utils/randomSigns';
+import gsschDataSource from '../database/connection';
+import userController from '../controllers/User.controller';
 dotenvService;
 const request = supertest(app);
 
@@ -27,44 +27,20 @@ let authCookie: string[];
 
 beforeAll(async () => {
   await testDatabase.initialize();
-  await RoleSeed();
 })
 
-describe("CRUD for user instance", () => {
+describe("add user", () => {
   it("add user", async () => {
-    const response = await request
-      .post("/users/user")
-      .send(dummyUser)
-      .expect(201)
-    const responseData = JSON.parse(response.text);
-    expect(responseData).toHaveProperty('id', expect.stringMatching(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/));
-    expect(responseData).toHaveProperty('info');
-    dummyUser.id = responseData.id;
-  })
-
-  it("change password", async () => {
-    const response = await request
-      .patch("/users/password")
-      .send({...dummyUser, newValue:newDummyPassword})
-      .expect(200)
-      const responseData = JSON.parse(response.text);
-      expect(responseData).toHaveProperty('info');
-      dummyUser.password = newDummyPassword;
-  })
-
-  it("change login", async () => {
-    const response = await request
-      .patch("/users/login")
-      .send({...dummyUser, newValue:newDummyLogin})
-      .expect(200)
-      const responseData = JSON.parse(response.text);
-      expect(responseData).toHaveProperty('info');
-      dummyUser.login = newDummyLogin;
-  })
-  
+    const user = await userController.addUser(dummyUser);
+    expect(user).toHaveProperty('id', expect.stringMatching(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/));
+    expect(user).toHaveProperty('login');
+    expect(user.login).toEqual(dummyUser.login);
+    expect(user).toHaveProperty('hash');
+    dummyUser.id = user.id;
+  }) 
 })
 
-describe("login and logout", () => {
+describe("login and password operations", () => {
   it('login', async () => {
     const response = await request
       .post('/users')
@@ -76,6 +52,15 @@ describe("login and logout", () => {
       authCookie = response.headers['set-cookie'];
   })
 
+  it('login with wrong data', async () => {
+    const response = await request
+      .post('/users')
+      .send({login: 'xxxxx', password: 'xxxxxx'})
+      .expect(401)
+      const responseData = JSON.parse(response.text);
+      expect(responseData).toHaveProperty('info');
+  })
+
   it('is user logged in check', async () => {
     const response = await request
       .get("/users")
@@ -85,40 +70,53 @@ describe("login and logout", () => {
     expect(responseData).toHaveProperty('login', expect.stringMatching(dummyUser.login));
     expect(responseData).toHaveProperty('info');
   })
-  
-  it("logout", async () => {
+
+  it("change password", async () => {
     const response = await request
-      .get("/users/logout")
+      .patch("/users/password")
       .set("Cookie", authCookie)
+      .send({...dummyUser, newValue:newDummyPassword})
       .expect(200)
-    const responseData = JSON.parse(response.text);
-    expect(responseData).toHaveProperty('info');
+      const responseData = JSON.parse(response.text);
+      expect(responseData).toHaveProperty('info');
+      dummyUser.password = newDummyPassword;
+  })
+
+  it("change login", async () => {
+    const response = await request
+      .patch("/users/login")
+      .set("Cookie", authCookie)
+      .send({...dummyUser, newValue:newDummyLogin})
+      .expect(200)
+      const responseData = JSON.parse(response.text);
+      expect(responseData).toHaveProperty('info');
+      dummyUser.login = newDummyLogin;
   })
 })
 
-describe("validator middleware test", () => {
+describe("validator test", () => {
   it("wrong user login during user add", async () => {
-    const response = await request
-      .post("/users/user")
-      .send({login: "", password: newDummyPassword})
-      .expect(400)
-      const responseData = JSON.parse(response.text);
-      expect(responseData).toHaveProperty('info', expect.stringContaining("validation error"))
+    try{
+      await userController.addUser({login: 'x', password: newDummyPassword})
+    } catch(error){
+      expect(error.message).toEqual("login or password is to short");
+    }
+    
   })
 
   it("wrong user password during user add", async () => {
-    const response = await request
-      .post("/users/user")
-      .send({login: newDummyLogin, password: ""})
-      .expect(400)
-      const responseData = JSON.parse(response.text);
-      expect(responseData).toHaveProperty('info', expect.stringContaining("validation error"))
+    try {
+      await userController.addUser({login: makeString(15), password:'x'});
+    }catch(error) {
+      expect(error.message).toEqual("login or password is to short");
+    }
   })
 
   it("change login with wrong data", async () => {
     const response = await request
       .patch("/users/login")
-      .send({...dummyUser, newValue: ""})
+      .set("Cookie", authCookie)
+      .send({...dummyUser, newValue: "x"})
       .expect(400)
       const responseData = JSON.parse(response.text);
       expect(responseData).toHaveProperty('info', expect.stringContaining("validation error"))
@@ -127,41 +125,47 @@ describe("validator middleware test", () => {
   it("change password with wrong data", async () => {
     const response = await request
       .patch("/users/password")
-      .send({...dummyUser, newValue: ""})
+      .set("Cookie", authCookie)
+      .send({...dummyUser, newValue: "x"})
       .expect(400)
       const responseData = JSON.parse(response.text);
       expect(responseData).toHaveProperty('info', expect.stringContaining("validation error"))
   })
 })
 
-describe('get user list and user delete', () => {
-  it("get list of user", async () => {
+describe('logout and authorization validation', () => {
+  it("logout", async () => {
     const response = await request
-      .get("/users/users")
-      .expect(200)
-    const responseData = JSON.parse(response.text);
-    console.log(responseData);
-    
-    expect(responseData.length).toBeGreaterThan(0);
-    expect(responseData[0]).toHaveProperty('login', expect.stringMatching(dummyUser.login));
-    expect(responseData[0]).toHaveProperty('id', expect.stringMatching(/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/));
-  })
-
-  it("delete user", async () => {
-    const response = await request
-      .delete("/users/user")
-      .send({login: dummyUser.login})
+      .get("/users/logout")
+      .set("Cookie", authCookie)
       .expect(200)
     const responseData = JSON.parse(response.text);
     expect(responseData).toHaveProperty('info');
   })
 
-  it("get list of user after delete", async () => {
+  it("authorization middleware", async () => {
     const response = await request
-      .get("/users/users")
-      .expect(200)
-    const responseData = JSON.parse(response.text);
-    expect(responseData.length).toEqual(0);
+      .patch("/users/password")
+      .set("Cookie", "xxxxxxx")
+      .send({...dummyUser, newValue: "xxxxxxxxxx"})
+      .expect(401)
+      const responseData = JSON.parse(response.text);
+      expect(responseData).toHaveProperty('info', expect.stringContaining("unauthorized"))
+  })
+})
+
+describe('get user list and user delete', () => {
+  it("get list of user", async () => {
+    const userList = await userController.usersList();
+    expect(userList.length).toBeGreaterThan(0);
+    expect(userList[0]).toHaveProperty('hash');
+    expect(userList[0]).toHaveProperty('id');
+    expect(userList[0]).toHaveProperty('login');
+  })
+
+  it("delete user", async () => {
+    const deletedId = await userController.deleteUser(newDummyLogin);
+    expect(deletedId).toEqual(dummyUser.id)
   })
 })
 
