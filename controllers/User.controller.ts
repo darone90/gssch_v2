@@ -8,6 +8,11 @@ import HTTPError from '../errors/httpError';
 import vorpalService from '../services/vorpalService';
 import UserValidator from '../validators/User.validator';
 
+interface standardResponse {
+  info: string,
+  login?: string,
+}
+
 class UserController {
   addUser = async (user: UserDTO):Promise<User> => {
     const { login, password } = user;
@@ -36,8 +41,11 @@ class UserController {
   login = async (req: Request, res: Response):Promise<void> => {
     const { login, password } = req.body as UserDTO;
     try {
-      const user = await this.checkLoginAndPassword(res, password, login);
-      if (!user) return;
+      const user = await this.checkLoginAndPassword(password, login);
+      if (!user) {
+        res.json(this.standardResponse(en.wrongPasswordOrLogin))
+        return
+      };
       const token = await createJWT();
       user.token = token.token;
       await user.save();
@@ -46,7 +54,7 @@ class UserController {
         domain: process.env.DOMAIN, 
         httpOnly: true,
       });
-      res.json({ info: en.loginOK, login: user.login });
+      res.json(this.standardResponse(en.loginOK, user.login));
     } catch (error) {
       throw new HTTPError(500, error.message, en.CONTROLLER, 'login');
     }
@@ -56,7 +64,7 @@ class UserController {
     try {
       const jwt = req.cookies.jwt;
       if (!jwt) {
-        res.json({ info: en.loginNoUser });
+        res.json(this.standardResponse(en.loginNoUser));
         return;
       }
       const token = verify(jwt.access, process.env.TOKEN as string) as Token;
@@ -66,13 +74,13 @@ class UserController {
         },
       });
       if (!user) {
-        res.cookie('jwt', '').json({ info: en.logout });
+        res.cookie('jwt', '').json(this.standardResponse(en.logout));
         return;
       }
       user.token = null;
       await user.save();
 
-      res.cookie('jwt', '').json({ info: en.logout });
+      res.cookie('jwt', '').json(this.standardResponse(en.logout));
     } catch (error) {
       throw new HTTPError(500, error.message, en.CONTROLLER, 'logout');
     }
@@ -99,12 +107,15 @@ class UserController {
   passwordChange = async (req: Request, res: Response): Promise<void> => {
     const { password, login, newValue } = req.body as UserDTO;
     try {
-      const user = await this.checkLoginAndPassword(res, password, login);
-      if (!user) return;
+      const user = await this.checkLoginAndPassword(password, login);
+      if (!user) {
+        res.json(this.standardResponse(en.wrongPasswordOrLogin));
+        return;
+      };
       const hash = await hashPassword(newValue as string);
       user.hash = hash;
       await user.save();
-      res.json({ info: en.passwordChange });
+      res.json(this.standardResponse(en.passwordChange, user.login));
     } catch (error) {
       throw new HTTPError(500, error.message, en.CONTROLLER, 'password change');
     }
@@ -113,11 +124,14 @@ class UserController {
   logginChange = async (req: Request, res: Response): Promise<void> => {
     const { newValue, password, login } = req.body as UserDTO;
     try {
-      const user = await this.checkLoginAndPassword(res, password, login);
-      if (!user) return;
+      const user = await this.checkLoginAndPassword(password, login);
+      if (!user) {
+        res.json(this.standardResponse(en.wrongPasswordOrLogin));
+        return;
+      };
       user.login = newValue as string;
       await user.save();
-      res.json({ info: en.loginChanged });
+      res.json(this.standardResponse(en.loginChanged, user.login));
     } catch (error) {
       throw new HTTPError(500, error.message, en.CONTROLLER, 'password change');
     }
@@ -128,20 +142,21 @@ class UserController {
     
     try {
       if (!jwt) {
-        res.status(401).json({ info: en.loginFalse });
+        res.json(this.standardResponse(en.loginFalse));
         return;
       }
-      const token = verify(jwt.access, process.env.TOKEN as string) as Token; 
+      const token = verify(jwt.access, process.env.TOKEN as string) as Token;
+       
       const user = await User.findOne({
         where: {
           token: token.token,
         },
       });
       if (!user) {
-        res.status(401).json({ info: en.loginFalse });
+        res.json(this.standardResponse(en.loginFalse));
         return;
       }
-      res.json({ info: en.loginUser, login: user.login });
+      res.json(this.standardResponse(en.loginUser, user.login));
     } catch (error) {
       throw new HTTPError(500, error.message, en.CONTROLLER, 'login check');
     }
@@ -156,27 +171,28 @@ class UserController {
     }
   }
 
-  checkLoginAndPassword = async (res: Response, password: string, login: string): Promise<User | null> => {
+  checkLoginAndPassword = async (password: string, login: string): Promise<User | null> => {
     const checkUser = await User.findOne({
       where: {
         login,
       },
     });
     if (!checkUser) {
-      res
-        .status(401)
-        .json({ info: en.loginNoExist });
       return null;
     }
     
     const checkPassword = await comparePassword(password, checkUser.hash);
     if (!checkPassword) {
-      res
-        .status(401)
-        .json({ info: en.passwordNotCorrect });
       return null;
     }
     return checkUser;
+  }
+
+  standardResponse(info: string, login?: string):standardResponse {
+    return {
+      info,
+      login: login ? login : null,
+    }
   }
 }
 

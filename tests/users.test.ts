@@ -56,9 +56,11 @@ describe("login and password operations", () => {
     const response = await request
       .post('/users')
       .send({login: 'xxxxx', password: 'xxxxxx'})
-      .expect(401)
+      .expect(200)
       const responseData = JSON.parse(response.text);
       expect(responseData).toHaveProperty('info');
+      expect(responseData).toHaveProperty('login');
+      expect(responseData.login).toEqual(null);
   })
 
   it('is user logged in check', async () => {
