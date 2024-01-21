@@ -64,3 +64,9 @@
   message: 'Error during user data validation: new login must have at least 4 characters',
   timestamp: '2023-03-19T22:24:05.716Z'
 }
+{
+  source: 'DATABASE',
+  level: 'error',
+  message: 'database connection error Error: connect ECONNREFUSED ::1:3306',
+  timestamp: '2023-10-07T14:24:57.241Z'
+}

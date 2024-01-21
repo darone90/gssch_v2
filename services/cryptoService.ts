@@ -1,4 +1,4 @@
-import { hash, compare } from 'bcrypt';
+import { hash, compare } from 'bcryptjs';
 import { User } from '../Entities/User.entity';
 import {v4 as uuid} from 'uuid';
 import { sign } from "jsonwebtoken";

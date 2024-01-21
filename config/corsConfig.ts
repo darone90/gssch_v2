@@ -11,5 +11,6 @@ const options = {
       callback(new Error('Not allowed by CORS'));
     }
   },
+  credentials: true
 };
 export default cors(options as CorsOptions);
